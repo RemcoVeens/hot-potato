@@ -32,7 +32,7 @@ func main() {
 		mess := queue.MessageFromDelivery(msg)
 		log.Printf("%s caught the %s\n", msg.ConsumerTag, mess.Message)
 		if mess.TrowsLeft < 1 {
-			log.Println("💥biem")
+			log.Printf("💥biem. %s dies\n", player)
 			os.Exit(0)
 		}
 		mess.TrowsLeft -= 1

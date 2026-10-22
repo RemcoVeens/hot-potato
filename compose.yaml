@@ -1,0 +1,34 @@
+
+
+services:
+  rabbitmq:
+    image: rabbitmq:4.4-management
+    hostname: rabbitmq            # RabbitMQ stores data per node name (rabbit@<hostname>), so keep it fixed
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-potato}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-secret}
+    ports:
+      - "5672:5672"               # so `go run .` on your host still works
+      - "15672:15672"             # management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  player:
+    build: .
+    image: hot_potato_player
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:-potato}:${RABBITMQ_PASS:-secret}@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 10s
+
+volumes:
+  rabbitmq-data:

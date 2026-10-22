@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,7 +22,11 @@ func GetQueueManager() QueueManager {
 
 func (qm *QueueManager) Connect() {
 	var err error
-	qm.conn, err = amqp.Dial("amqp://guest:guest@localhost:5672/")
+	url := os.Getenv("AMQP_URL")
+	if url == "" {
+		url = "amqp://guest:guest@localhost:5672/"
+	}
+	qm.conn, err = amqp.Dial(url)
 	failOnError(err, "Failed to connect to RabbitMQ")
 }
 func (qm *QueueManager) CloseConn() {

@@ -11,13 +11,6 @@ func failOnError(err error, msg string) {
 		log.Panicf("%s: %s", msg, err)
 	}
 }
-
-func GetConn() (conn *amqp.Connection) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	return
-}
-
 func DeclareQueue(ch *amqp.Channel, name string) (q amqp.Queue) {
 	q, err := ch.QueueDeclare(
 		name,  // name

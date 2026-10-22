@@ -13,11 +13,11 @@ import (
 )
 
 func main() {
-	qm := queue.QueueManager{}
+	qm := queue.GetQueueManager()
 	qm.Connect()
 	defer qm.CloseConn()
 	qm.SendMessage("this is a test")
-	reciever := qm.GetMessages(fake.FirstName())
+	reciever := qm.GetReciever(fake.FirstName())
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

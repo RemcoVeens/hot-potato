@@ -8,10 +8,17 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const QUEUENAME string = "hot potato"
+
 type QueueManager struct {
 	conn  *amqp.Connection
 	queue amqp.Queue
 	ch    *amqp.Channel
+}
+
+func GetQueueManager() QueueManager {
+	return QueueManager{}
+
 }
 
 func (qm *QueueManager) Connect() {
@@ -27,7 +34,7 @@ func (qm *QueueManager) CloseChan() {
 	qm.ch.Close()
 }
 
-func (qm *QueueManager) GetMessages(consumerName string) (msgs <-chan amqp.Delivery) {
+func (qm *QueueManager) GetReciever(consumerName string) (msgs <-chan amqp.Delivery) {
 	qm.openChannel()
 	var err error
 	q := DeclareQueue(qm.ch, QUEUENAME)

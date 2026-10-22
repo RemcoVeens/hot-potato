@@ -17,13 +17,9 @@ func main() {
 	qm := queue.GetQueueManager()
 	qm.Connect()
 	defer qm.CloseConn()
-	go func() {
-		for i := range 5 {
-			qm.SendMessage(queue.MakeMessage(fake.EmailSubject()))
-			time.Sleep(time.Second * time.Duration(i))
-		}
-	}()
-	reciever := qm.GetReciever(fake.FirstName())
+	player := fake.FemaleFirstName()
+	reciever := qm.GetReciever(player)
+	log.Printf("%s is ready to play\n", player)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -34,8 +30,15 @@ func main() {
 	}()
 	for msg := range reciever {
 		mess := queue.MessageFromDelivery(msg)
+		log.Printf("%s caught the %s\n", msg.ConsumerTag, mess.Message)
+		if mess.TrowsLeft < 1 {
+			log.Println("💥biem")
+			os.Exit(0)
+		}
+		mess.TrowsLeft -= 1
+		time.Sleep(time.Duration(1) * time.Second)
+		qm.SendMessage(mess)
 
-		log.Printf(" [*] Recieved: '%s' from: '%s'\n", mess.Message, msg.ConsumerTag)
 	}
 	fmt.Print("\b\b")
 	log.Println("shutting down")

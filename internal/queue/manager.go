@@ -2,8 +2,6 @@ package queue
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -15,23 +13,6 @@ type QueueManager struct {
 	conn  *amqp.Connection
 	queue amqp.Queue
 	ch    *amqp.Channel
-}
-type QueueMessage struct {
-	Message string `json:"message"`
-}
-
-func MakeMessage(message string) QueueMessage {
-	return QueueMessage{Message: message}
-}
-func (qm QueueMessage) ToBytes() (marshaled []byte) {
-	marshaled, err := json.Marshal(qm)
-	failOnError(err, "faild to decode json")
-	return
-}
-func MessageFromDelivery(d amqp.Delivery) (msg QueueMessage) {
-	err := json.Unmarshal(d.Body, &msg)
-	failOnError(err, "could not decode")
-	return
 }
 
 func GetQueueManager() QueueManager {
@@ -90,5 +71,4 @@ func (qm *QueueManager) SendMessage(msg QueueMessage) {
 			Body:        msg.ToBytes(),
 		})
 	failOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Sent '%s'\n", msg.Message)
 }

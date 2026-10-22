@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -15,10 +16,26 @@ type QueueManager struct {
 	queue amqp.Queue
 	ch    *amqp.Channel
 }
+type QueueMessage struct {
+	Message string `json:"message"`
+}
+
+func MakeMessage(message string) QueueMessage {
+	return QueueMessage{Message: message}
+}
+func (qm QueueMessage) ToBytes() (marshaled []byte) {
+	marshaled, err := json.Marshal(qm)
+	failOnError(err, "faild to decode json")
+	return
+}
+func MessageFromDelivery(d amqp.Delivery) (msg QueueMessage) {
+	err := json.Unmarshal(d.Body, &msg)
+	failOnError(err, "could not decode")
+	return
+}
 
 func GetQueueManager() QueueManager {
 	return QueueManager{}
-
 }
 
 func (qm *QueueManager) Connect() {
@@ -48,7 +65,6 @@ func (qm *QueueManager) GetReciever(consumerName string) (msgs <-chan amqp.Deliv
 		nil,          // args
 	)
 	failOnError(err, "Failed to register a consumer")
-
 	return
 }
 func (qm *QueueManager) openChannel() {
@@ -56,7 +72,7 @@ func (qm *QueueManager) openChannel() {
 	qm.ch, err = qm.conn.Channel()
 	failOnError(err, "Failed to open a channel")
 }
-func (qm *QueueManager) SendMessage(msg string) {
+func (qm *QueueManager) SendMessage(msg QueueMessage) {
 	var err error
 	qm.openChannel()
 	qm.queue = DeclareQueue(qm.ch, QUEUENAME)
@@ -70,9 +86,9 @@ func (qm *QueueManager) SendMessage(msg string) {
 		false,         // mandatory
 		false,         // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(msg),
+			ContentType: "application/json",
+			Body:        msg.ToBytes(),
 		})
 	failOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Sent '%s'\n", msg)
+	log.Printf(" [x] Sent '%s'\n", msg.Message)
 }
